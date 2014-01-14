@@ -35,8 +35,7 @@ class auth_plugin_taat extends auth_plugin_base {
         $conditions = array('idnumber' => $idnumber);
         $usertologin = $DB->get_record('user', $conditions, $fields='*');
 
-        // TODO: check permissions:
-        // $setting->get_setting()
+        $this->check_for_not_allowed_roles($usertologin);
 
         if ($usertologin !== false) {
             $USER = complete_user_login($usertologin);
@@ -63,7 +62,21 @@ class auth_plugin_taat extends auth_plugin_base {
         $auth->logout($CFG->wwwroot);
     }
 
-    function get_settings() {
+    function config_form($config, $err, $user_fields) {
+        foreach ($this->settings as $name => $setting) {
+            if ($name == 'notallowedtologin')
+                $setting->load_choices();
+            echo $setting->output_html($setting->get_setting());
+        }
+    }
+
+    function process_config($config) {
+        $this->settings['simplesamlplace']->write_setting($config->s__simplesamlplace);
+        $this->settings['simplesamlspname']->write_setting($config->s__simplesamlspname);
+        $this->settings['notallowedtologin']->write_setting($config->s__notallowedtologin);
+    }
+
+    private function get_settings() {
         $context = context_system::instance();
 
         $settings['simplesamlplace'] = new admin_setting_configfile('simplesamlplace', new lang_string('simplesamlplace', 'auth_taat'));
@@ -77,18 +90,13 @@ class auth_plugin_taat extends auth_plugin_base {
         $this->settings = $settings;
     }
 
-    function config_form($config, $err, $user_fields) {
-        foreach ($this->settings as $name => $setting) {
-            if ($name == 'notallowedtologin')
-                $setting->load_choices();
-            echo $setting->output_html($setting->get_setting());
+    private function check_for_not_allowed_roles($usertologin) {
+        $this->settings['notallowedtologin']->load_choices();
+        foreach ($this->settings['notallowedtologin']->get_setting() as $roleid) {
+            // TODO here...
+            if (false)
+                throw new Exception("This user is not allowed to login through TAAT");
         }
-    }
-
-    function process_config($config) {
-        $this->settings['simplesamlplace']->write_setting($config->s__simplesamlplace);
-        $this->settings['simplesamlspname']->write_setting($config->s__simplesamlspname);
-        $this->settings['notallowedtologin']->write_setting($config->s__notallowedtologin);
     }
 
 }
