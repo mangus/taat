@@ -93,8 +93,7 @@ class auth_plugin_taat extends auth_plugin_base {
     private function check_for_not_allowed_roles($usertologin) {
         $this->settings['notallowedtologin']->load_choices();
         foreach ($this->settings['notallowedtologin']->get_setting() as $roleid) {
-            // TODO here...
-            if (false)
+            if ($DB->count_records('role_assignments', array('roleid'=>$roleid, 'userid' => $usertologin->id)))
                 throw new Exception("This user is not allowed to login through TAAT");
         }
     }
