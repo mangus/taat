@@ -12,6 +12,7 @@ class auth_plugin_taat extends auth_plugin_base {
     function auth_plugin_taat() {
         $this->authtype = 'taat';
         $this->get_settings();
+        require_once($this->settings['simplesamlplace']->get_setting() . '/lib/_autoload.php');
     }
 
     /** Login is going through file auth/taat/login.php instead of usual login form */
@@ -23,8 +24,6 @@ class auth_plugin_taat extends auth_plugin_base {
     function authenticate_with_taat() {
 
         global $DB, $CFG, $SESSION;
-
-        require_once($this->settings['simplesamlplace']->get_setting() . '/lib/_autoload.php');
 
         $auth = new SimpleSAML_Auth_Simple($this->settings['simplesamlspname']->get_setting());
         $auth->requireAuth(array('saml:idp' => 'https://reos.taat.edu.ee/saml2/idp/metadata.php'));
@@ -60,10 +59,12 @@ class auth_plugin_taat extends auth_plugin_base {
         }
     }
 
-    function perlogout_hook() {
+    function logoutpage_hook() {
         global $CFG;
+        require_logout();
         $auth = new SimpleSAML_Auth_Simple($this->settings['simplesamlspname']->get_setting());
-        $auth->logout($CFG->wwwroot);
+        if ($auth->isAuthenticated())
+            $auth->logout($CFG->wwwroot);
     }
 
     function config_form($config, $err, $user_fields) {
