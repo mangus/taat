@@ -36,9 +36,8 @@ class auth_plugin_taat extends auth_plugin_base {
         $conditions = array('idnumber' => $idnumber);
         $usertologin = $DB->get_record('user', $conditions, $fields='*');
 
-        $this->check_for_not_allowed_roles($usertologin);
-
         if ($usertologin !== false) {
+            $this->check_for_not_allowed_roles($usertologin);
             $USER = complete_user_login($usertologin);
             if (optional_param('password_recovery', false, PARAM_BOOL))
                 $SESSION->wantsurl = $CFG->wwwroot . '/login/change_password.php';
