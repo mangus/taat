@@ -53,7 +53,11 @@ class auth_plugin_taat extends auth_plugin_base {
     function loginpage_hook() {
         global $errormsg;
         if (optional_param('no_such_idnumber', false, PARAM_BOOL)) {
-            $errormsg = get_string('no_such_idnumber', 'auth_taat');
+            $errormsg = get_string('nosuchidnumber', 'auth_taat');
+        } else if (optional_param('nositeadminlogin', false, PARAM_BOOL)) {
+            $errormsg = get_string('no_site_admin_login', 'auth_taat');
+        } else if (optional_param('not_allowed_to_login', false, PARAM_BOOL)) {
+            $errormsg = get_string('notallowedtologin', 'auth_taat');
         }
     }
 
@@ -83,21 +87,36 @@ class auth_plugin_taat extends auth_plugin_base {
         $settings['simplesamlplace'] = new admin_setting_configfile('simplesamlplace', new lang_string('simplesamlplace', 'auth_taat'), '', '');
         $settings['simplesamlspname'] = new admin_setting_configtext('simplesamlspname', new lang_string('simplesamlspname', 'auth_taat'), '', '');
 
+        $roles = get_assignable_roles($context);
+        $roles[0] = new lang_string('siteadministrators', 'role');
         $settings['notallowedtologin'] =
             new admin_setting_configmultiselect('notallowedtologin', new lang_string('notallowedtologin', 'auth_taat'),
                    new lang_string('notallowedtologindescription', 'auth_taat'), array(),
-                       get_assignable_roles($context));
+                       $roles);
 
         $this->settings = $settings;
     }
 
     private function check_for_not_allowed_roles($usertologin) {
-        global $DB;
+        global $DB, $CFG;
         $this->settings['notallowedtologin']->load_choices();
         foreach ($this->settings['notallowedtologin']->get_setting() as $roleid) {
-            if ($DB->count_records('role_assignments', array('roleid'=>$roleid, 'userid' => $usertologin->id)))
-                throw new Exception("This user is not allowed to login through TAAT");
+            if (0 == $roleid) { // Site administrator check
+                foreach (explode(',', $CFG->siteadmins) as $admin) {
+                    if ((int)$admin == $usertologin->id) {
+                        $goto = $CFG->wwwroot . '/login/?no_site_admin_login=1';
+                        break 2;
+                    }
+                }
+            } else {
+                if ($DB->count_records('role_assignments', array('roleid'=>$roleid, 'userid' => $usertologin->id))) {
+                    $goto = $CFG->wwwroot . '/login/?not_allowed_to_login=1';
+                    break;
+                }
+            }
         }
+        if (isset($goto))
+            redirect($goto);
     }
 
 }
