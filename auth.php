@@ -4,6 +4,7 @@ if (!defined('MOODLE_INTERNAL'))
     die('Direct access to this script is forbidden.');
 
 require_once($CFG->dirroot.'/lib/authlib.php');
+require_once($CFG->dirroot.'/lib/adminlib.php');
 
 class auth_plugin_taat extends auth_plugin_base {
 
@@ -23,7 +24,7 @@ class auth_plugin_taat extends auth_plugin_base {
 
         global $DB, $CFG, $SESSION;
 
-        require_once($this->settings['simplesamlspname']->get_setting() . '/lib/_autoload.php');
+        require_once($this->settings['simplesamlplace']->get_setting() . '/lib/_autoload.php');
 
         $auth = new SimpleSAML_Auth_Simple($this->settings['simplesamlspname']->get_setting());
         $auth->requireAuth(array('saml:idp' => 'https://reos.taat.edu.ee/saml2/idp/metadata.php'));
@@ -79,8 +80,8 @@ class auth_plugin_taat extends auth_plugin_base {
     private function get_settings() {
         $context = context_system::instance();
 
-        $settings['simplesamlplace'] = new admin_setting_configfile('simplesamlplace', new lang_string('simplesamlplace', 'auth_taat'));
-        $settings['simplesamlspname'] = new admin_setting_configtext('simplesamlspname', new lang_string('simplesamlspname', 'auth_taat'));
+        $settings['simplesamlplace'] = new admin_setting_configfile('simplesamlplace', new lang_string('simplesamlplace', 'auth_taat'), '', '');
+        $settings['simplesamlspname'] = new admin_setting_configtext('simplesamlspname', new lang_string('simplesamlspname', 'auth_taat'), '', '');
 
         $settings['notallowedtologin'] =
             new admin_setting_configmultiselect('notallowedtologin', new lang_string('notallowedtologin', 'auth_taat'),
@@ -91,6 +92,7 @@ class auth_plugin_taat extends auth_plugin_base {
     }
 
     private function check_for_not_allowed_roles($usertologin) {
+        global $DB;
         $this->settings['notallowedtologin']->load_choices();
         foreach ($this->settings['notallowedtologin']->get_setting() as $roleid) {
             if ($DB->count_records('role_assignments', array('roleid'=>$roleid, 'userid' => $usertologin->id)))
