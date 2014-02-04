@@ -30,7 +30,7 @@ class auth_plugin_taat extends auth_plugin_base {
 
         $attributes = $auth->getAttributes();
         $idparts = explode('ee:EID:', $attributes['schacPersonalUniqueID'][0]);
-        $idnumber = $idparts[1];
+        $idnumber = trim($idparts[1]);
 
         $conditions = array('idnumber' => $idnumber);
         $usertologin = $DB->get_record('user', $conditions, $fields='*');
