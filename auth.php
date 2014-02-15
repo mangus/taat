@@ -12,7 +12,9 @@ class auth_plugin_taat extends auth_plugin_base {
     function auth_plugin_taat() {
         $this->authtype = 'taat';
         $this->get_settings();
-        require_once($this->settings['simplesamlplace']->get_setting() . '/lib/_autoload.php');
+        $autoloadfile = $this->settings['simplesamlplace']->get_setting() . '/lib/_autoload.php';
+        if (file_exists($autoloadfile))
+            require_once($autoloadfile);
     }
 
     /** Login is going through file auth/taat/login.php instead of usual login form */
