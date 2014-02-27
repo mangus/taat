@@ -28,7 +28,11 @@ class auth_plugin_taat extends auth_plugin_base {
         global $DB, $CFG, $SESSION;
 
         $auth = new SimpleSAML_Auth_Simple($this->settings['simplesamlspname']->get_setting());
-        $auth->requireAuth(array('saml:idp' => 'https://reos.taat.edu.ee/saml2/idp/metadata.php'));
+        
+        // Test
+        //$auth->requireAuth(array('saml:idp' => 'https://reos.taat.edu.ee/saml2/idp/metadata.php'));
+        // Live
+        $auth->requireAuth(array('saml:idp' => 'https://sarvik.taat.edu.ee/saml2/idp/metadata.php'));
 
         $attributes = $auth->getAttributes();
         $idparts = explode('ee:EID:', $attributes['schacPersonalUniqueID'][0]);
