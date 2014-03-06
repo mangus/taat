@@ -35,11 +35,16 @@ class auth_plugin_taat extends auth_plugin_base {
         $auth->requireAuth(array('saml:idp' => 'https://sarvik.taat.edu.ee/saml2/idp/metadata.php'));
 
         $attributes = $auth->getAttributes();
-        $idparts = explode('ee:EID:', $attributes['schacPersonalUniqueID'][0]);
-        $idnumber = trim($idparts[1]);
-
-        $conditions = array('idnumber' => $idnumber);
-        $usertologin = $DB->get_record('user', $conditions, $fields='*');
+        if (isset($attributes['schacPersonalUniqueID'][0])) {
+            $idparts = explode('ee:EID:', $attributes['schacPersonalUniqueID'][0]);
+            $idnumber = trim($idparts[1]);
+            if (self::valid_estonian_idnumber($idnumber)) {
+                $conditions = array('idnumber' => $idnumber);
+                $usertologin = $DB->get_record('user', $conditions, $fields='*');
+            } else
+                $usertologin = false;
+        } else
+            $usertologin = false;
 
         if ($usertologin !== false) {
             $this->check_for_not_allowed_roles($usertologin);
@@ -124,7 +129,24 @@ class auth_plugin_taat extends auth_plugin_base {
         if (isset($goto))
             redirect($goto);
     }
-
+    
+    /* from http://et.wikipedia.org/wiki/Isikukood */
+    static function valid_estonian_idnumber($code) {
+        if(strlen($code) != 11 || !is_numeric($code)) return false;
+        $subcode = substr($code, 0, -1);
+        for ( $k = 1; $k <= 3; ++$k ) 
+        {
+            $s = 0;
+            for ( $i = 0; $i < 10; ++$i ) 
+            { 
+                $s += $k * $subcode{$i}; 
+                $k  = ( 9 == $k ? 1 : $k + 1 ); 
+            }
+            if ( ( $s %= 11 ) < 10 )  
+                break;
+        }
+        $s = $s == 10 ? 0 : $s;
+        return substr($code, -1) == $s;
+    }
+    
 }
-
-
